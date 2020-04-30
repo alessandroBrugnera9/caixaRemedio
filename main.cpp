@@ -1,6 +1,5 @@
-#include <arduino.h>
-#include <avr/sleep.h>
-#include <avr/wdt.h>
+#include <zconf.h>
+#include "Arduino.h"
 #include "Vector.h"
 #include "virtuabotixRTC.h"
 
@@ -9,6 +8,7 @@
 #define   clk   6
 #define   dat   7
 #define   rst   8
+#define   ledPin   9
 
 
 // ========================================================================================================
@@ -23,41 +23,41 @@
 
 
 // ========================================================================================================
-// --- Declaração de Objetos ---
-virtuabotixRTC myRTC(clk, dat, rst);         //declara objeto para o RTC
-using namespace std;
-
-void sleep() {    // disable ADC
-// watchdog interrupt
-    ISR(WDT_vect)
-    {
-        wdt_disable();  // disable watchdog
-
-    }  // end of WDT_vect
-
-    ADCSRA = 0;
-
-// clear various "reset" flags
-    MCUSR = 0;
-// allow changes, disable reset
-    WDTCSR = bit(WDCE) | bit(WDE);
-// set interrupt mode and an interval
-    WDTCSR = bit(WDIE) | bit(WDP3) | bit(WDP0);    // set WDIE, and 8 seconds delay
-    wdt_reset();  // pat the dog
-
-    set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-    noInterrupts();           // timed sequence follows
-    sleep_enable();
-
-// turn off brown-out enable in software
-    MCUCR = bit(BODS) | bit(BODSE);
-    MCUCR = bit(BODS);
-    interrupts();             // guarantees next instruction executed
-    sleep_cpu();
-
-// cancel sleep as a precaution
-    sleep_disable();
-}
+//// --- Declaração de Objetos --- TODO: testat RTC
+//virtuabotixRTC myRTC(clk, dat, rst);         //declara objeto para o RTC
+//using namespace std;
+//
+//void sleep() {    // disable ADC
+//// watchdog interrupt
+//    ISR(WDT_vect)
+//    {
+//        wdt_disable();  // disable watchdog
+//
+//    }  // end of WDT_vect
+//
+//    ADCSRA = 0;
+//
+//// clear various "reset" flags
+//    MCUSR = 0;
+//// allow changes, disable reset
+//    WDTCSR = bit(WDCE) | bit(WDE);
+//// set interrupt mode and an interval
+//    WDTCSR = bit(WDIE) | bit(WDP3) | bit(WDP0);    // set WDIE, and 8 seconds delay
+//    wdt_reset();  // pat the dog
+//
+//    set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+//    noInterrupts();           // timed sequence follows
+//    sleep_enable();
+//
+//// turn off brown-out enable in software
+//    MCUCR = bit(BODS) | bit(BODSE);
+//    MCUCR = bit(BODS);
+//    interrupts();             // guarantees next instruction executed
+//    sleep_cpu();
+//
+//// cancel sleep as a precaution
+//    sleep_disable();
+//}
 
 
 void light(int led) { //TODO ver como funciona o ci e programar
@@ -76,11 +76,14 @@ struct medicine {
     int place;
     int stock;
     int dose[2];
-};
+} medicines[8];
+
+void sleep();
+
+bool botaoApertado();
 
 int nextDose;
 int led;
-//TODO decidir se struct ou objeto melhor
 int daily;
 int takenTilNow;
 
@@ -89,9 +92,11 @@ Vector<int> scheduleMedicine;
 
 
 //--------------------Auxiliares-----------------
-int currentTime() {
-    myRTC.updateTime();
-    int time = myRTC.hours * 60 + myRTC.minutes
+int currentTime() { //TODO: arrumar para pegar o tempo pelo RTC
+//    myRTC.updateTime();
+//    int time = myRTC.hours * 60 + myRTC.minutes
+    int time = 60;
+
 
     return time; //converte pra minutos
 }
@@ -123,11 +128,11 @@ void loop() {
     if (takenTilNow < daily) {
         if (nextDoseSteps == 0) {
             led = true; //TODO melhorar logicA
-            bool botaoApertado = false;
             while (led) { //verficar se vale como boolean
                 //setar led high
-                if (!botaoApertado) { //botao apertado
+                if (botaoApertado()) { //botao apertado
                     nextDoseSteps = getNextDose();
+                    led = false;
                 }
             }
         }
@@ -135,3 +140,13 @@ void loop() {
 
     sleep(); //Dorme esperando proximo remedio
 }
+
+bool botaoApertado() { //TODO:criar botao
+    return false;
+}
+
+void sleep() {
+    delay(8000);
+}
+
+
